@@ -1,21 +1,23 @@
 // Define variables for canvas size
-let canvasWidth = screen.width;
-let canvasHeight = canvasWidth/2;
-let factor = canvasWidth / 50;
-let c1, c2, c3, c4, c5, c6, c7
+let canvasWidth = screen.availWidth;
+let canvasHeight = screen.availHeight;
+
+let perspective = screen.availWidth/600;
+let factor = canvasWidth /50;
+let c1, c2, c3, c4, c5, c6, c7;
 
 function setup() {
   createCanvas(canvasWidth, canvasHeight);
-  c7 = new DraggableCircle(canvasWidth * 0, canvasHeight * 0.55, 20, 3);
-  c1 = new DraggableCircle(canvasWidth * 0.57, canvasHeight * 0.67, 20, 4);
-  c2 = new DraggableCircle(canvasWidth * 0.75, canvasHeight * 0.53, 20, 3);
-  c6 = new DraggableCircle(canvasWidth * 1.35, canvasHeight * 0.5, 20, 4);
-  c3 = new DraggableCircle(canvasWidth, canvasHeight * 0.47, 20, 2);
-  c4 = new DraggableCircle(canvasWidth * 0.33, canvasHeight * 0.53, 20, 1);
-  c5 = new DraggableCircle(canvasWidth * 0.25, canvasHeight * 0.73, 20, 1);
-  
+  c7 = new DraggableCircle(canvasWidth * 0, canvasHeight * 0.55, 20, 3*perspective);
+  c1 = new DraggableCircle(canvasWidth * 0.57, canvasHeight * 0.67, 20, 4*perspective);
+  c2 = new DraggableCircle(canvasWidth * 0.75, canvasHeight * 0.53, 20, 3*perspective);
+  c6 = new DraggableCircle(canvasWidth * 1.35, canvasHeight * 0.5, 20, 4*perspective);
+  c3 = new DraggableCircle(canvasWidth, canvasHeight * 0.47, 20, 2*perspective);
+  c4 = new DraggableCircle(canvasWidth * 0.33, canvasHeight * 0.53, 20, 2*perspective);
+  c5 = new DraggableCircle(canvasWidth * 0.25, canvasHeight * 0.73, 20, 1*perspective);
   
 }
+
 
 function draw() {
   background(100);
@@ -68,33 +70,33 @@ function drawTriangles() {
   // Most back middle small triangle
   fill(73, 73, 75);
   triangle(
-    canvasWidth * 0.22 - (mouseX*4 /factor), canvasHeight,
+    canvasWidth * 0.22 - (mouseX*c1.getMoveFactor() /factor), canvasHeight,
     c1.getX(), c1.y,
-    canvasWidth * 0.9 - (mouseX*4 /factor), canvasHeight
+    canvasWidth * 0.9 - (mouseX*c1.getMoveFactor() /factor), canvasHeight
   );
   
         // t most back middle big triangle6
   fill(73, 73, 75);
   triangle(
-    canvasWidth * 0.8 - (mouseX*3 /factor), canvasHeight,
+    canvasWidth * 0.8 - (mouseX*c6.getMoveFactor() /factor), canvasHeight,
     c6.getX(), c6.y,
-    canvasWidth * 1.6 - (mouseX*3 /factor), canvasHeight
+    canvasWidth * 1.6 - (mouseX*c6.getMoveFactor() /factor), canvasHeight
   );
   
     //most back left
    fill(114, 118, 123);
   triangle(
-    canvasWidth * -0.4 - (mouseX*4 /factor), canvasHeight,
+    canvasWidth * -0.4 - (mouseX*c7.getMoveFactor() /factor), canvasHeight,
     c7.getX(), c7.y,
-    canvasWidth * 0.4 - (mouseX*4 /factor), canvasHeight
+    canvasWidth * 0.4 - (mouseX*c7.getMoveFactor() /factor), canvasHeight
   );
 
   // Second back middle big triangle
   fill(114, 118, 123);
   triangle(
-    canvasWidth * 0.5 - (mouseX*3 /factor), canvasHeight,
+    canvasWidth * 0.5 - (mouseX*c2.getMoveFactor() /factor), canvasHeight,
     c2.getX(), c2.y,
-    canvasWidth - (mouseX*3 /factor), canvasHeight
+    canvasWidth - (mouseX*c2.getMoveFactor() /factor), canvasHeight
   );
   
 
@@ -102,25 +104,25 @@ function drawTriangles() {
   // Big right triangle
   fill(130, 134, 138);
   triangle(
-    canvasWidth * 0.58 - (mouseX*2 /factor), canvasHeight,
+    canvasWidth * 0.58 - (mouseX*c3.getMoveFactor() /factor), canvasHeight,
     c3.getX(), c3.y,
-    canvasWidth * 1.25 - (mouseX*2 /factor), canvasHeight
+    canvasWidth * 1.25 - (mouseX*c3.getMoveFactor() /factor), canvasHeight
   );
 
   // Front big left triangle
   fill(130, 134, 138);
   triangle(
-    canvasWidth * -0.17 - (mouseX /factor), canvasHeight,
+    canvasWidth * -0.17 - (mouseX*c4.getMoveFactor() /factor), canvasHeight,
     c4.getX(), c4.y,
-    canvasWidth * 0.67 - (mouseX /factor), canvasHeight
+    canvasWidth * 0.67 - (mouseX*c4.getMoveFactor() /factor), canvasHeight
   );
 
   // Last triangle (m5)
   fill(166, 169, 172);
   triangle(
-    canvasWidth * -0.08 - (mouseX /factor), canvasHeight,
+    canvasWidth * -0.08 - (mouseX*c5.getMoveFactor() /factor), canvasHeight,
     c5.getX(), c5.y,
-    canvasWidth * 0.55 - (mouseX /factor), canvasHeight
+    canvasWidth * 0.55 - (mouseX*c5.getMoveFactor() /factor), canvasHeight
   );
 
   // Display and update all circles
@@ -148,6 +150,10 @@ class DraggableCircle {
     this.offsetY = 0;
     this.hovered = false;
     this.moveFactor = moveFactor;
+  }
+
+  getMoveFactor() {
+    return this.moveFactor;
   }
 
   getX() {
