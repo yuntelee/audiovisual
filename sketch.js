@@ -1,5 +1,5 @@
 // Define variables for canvas size
-let canvasWidth = 600;
+let canvasWidth = windowWidth;
 let canvasHeight = canvasWidth/2;
 let factor = canvasWidth / 50;
 let c1, c2, c3, c4, c5;
