@@ -8,12 +8,12 @@ let c1, c2, c3, c4, c5, c6, c7;
 
 function setup() {
   createCanvas(canvasWidth, canvasHeight);
-  c7 = new DraggableCircle(canvasWidth * 0, canvasHeight * 0.55, 20, 3*perspective);
-  c1 = new DraggableCircle(canvasWidth * 0.57, canvasHeight * 0.67, 20, 4*perspective);
-  c2 = new DraggableCircle(canvasWidth * 0.75, canvasHeight * 0.53, 20, 3*perspective);
-  c6 = new DraggableCircle(canvasWidth * 1.35, canvasHeight * 0.5, 20, 4*perspective);
-  c3 = new DraggableCircle(canvasWidth, canvasHeight * 0.47, 20, 2*perspective);
-  c4 = new DraggableCircle(canvasWidth * 0.33, canvasHeight * 0.53, 20, 2*perspective);
+  c7 = new DraggableCircle(canvasWidth * 0, canvasHeight * 0.55, 20, 4*perspective);
+  c1 = new DraggableCircle(canvasWidth * 0.57, canvasHeight * 0.67, 20, 6*perspective);
+  c2 = new DraggableCircle(canvasWidth * 0.75, canvasHeight * 0.53, 20, 4*perspective);
+  c6 = new DraggableCircle(canvasWidth * 1.35, canvasHeight * 0.5, 20, 6*perspective);
+  c3 = new DraggableCircle(canvasWidth, canvasHeight * 0.47, 20, 3*perspective);
+  c4 = new DraggableCircle(canvasWidth * 0.33, canvasHeight * 0.53, 20, 3*perspective);
   c5 = new DraggableCircle(canvasWidth * 0.25, canvasHeight * 0.73, 20, 1*perspective);
   
 }
@@ -163,7 +163,7 @@ class DraggableCircle {
   display() {
     stroke(0);
     if (this.dragging || this.hovered) {
-      fill(255, 249, 201);
+      fill(255, 249, 201, 128);
       ellipse(this.getX(), this.y, this.r * 2);
     } 
   }
