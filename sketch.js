@@ -1,15 +1,14 @@
 // Define variables for canvas size
-let canvasWidth = screen.width;
+let canvasWidth = 600;
 let canvasHeight = canvasWidth/2;
 let factor = canvasWidth / 50;
-let c1, c2, c3, c4, c5, c6, c7
+let c1, c2, c3, c4, c5, c6;
 
 function setup() {
   createCanvas(canvasWidth, canvasHeight);
-  c7 = new DraggableCircle(canvasWidth * 0, canvasHeight * 0.55, 20, 3);
   c1 = new DraggableCircle(canvasWidth * 0.57, canvasHeight * 0.67, 20, 4);
   c2 = new DraggableCircle(canvasWidth * 0.75, canvasHeight * 0.53, 20, 3);
-  c6 = new DraggableCircle(canvasWidth * 1.35, canvasHeight * 0.5, 20, 4);
+  c6 = new DraggableCircle(canvasWidth * 1.2, canvasHeight * 0.4, 20, 3);
   c3 = new DraggableCircle(canvasWidth, canvasHeight * 0.47, 20, 2);
   c4 = new DraggableCircle(canvasWidth * 0.33, canvasHeight * 0.53, 20, 1);
   c5 = new DraggableCircle(canvasWidth * 0.25, canvasHeight * 0.73, 20, 1);
@@ -61,32 +60,12 @@ function draw() {
 }
 
 function drawTriangles() {
-
-  
-
-
   // Most back middle small triangle
-  fill(73, 73, 75);
+  fill(65, 68, 75);
   triangle(
     canvasWidth * 0.22 - (mouseX*4 /factor), canvasHeight,
     c1.getX(), c1.y,
     canvasWidth * 0.9 - (mouseX*4 /factor), canvasHeight
-  );
-  
-        // t most back middle big triangle6
-  fill(73, 73, 75);
-  triangle(
-    canvasWidth * 0.8 - (mouseX*3 /factor), canvasHeight,
-    c6.getX(), c6.y,
-    canvasWidth * 1.6 - (mouseX*3 /factor), canvasHeight
-  );
-  
-    //most back left
-   fill(114, 118, 123);
-  triangle(
-    canvasWidth * -0.4 - (mouseX*4 /factor), canvasHeight,
-    c7.getX(), c7.y,
-    canvasWidth * 0.4 - (mouseX*4 /factor), canvasHeight
   );
 
   // Second back middle big triangle
@@ -97,7 +76,13 @@ function drawTriangles() {
     canvasWidth - (mouseX*3 /factor), canvasHeight
   );
   
-
+    // t back middle big triangle6
+  fill(114, 118, 123);
+  triangle(
+    canvasWidth * 0.8 - (mouseX*3 /factor), canvasHeight,
+    c6.getX(), c6.y,
+    canvasWidth * 1.6 - (mouseX*3 /factor), canvasHeight
+  );
 
   // Big right triangle
   fill(130, 134, 138);
@@ -167,11 +152,7 @@ class DraggableCircle {
     this.hovered = d < this.r;
 
     if (this.dragging) {
-      
-      
-      this. y = constrain(lerp(this.y, py, 0.1), this.r*4, canvasHeight - this.r*2);
-      
-      
+      this.y = lerp(this.y, py, 0.1);
     }
   }
 
