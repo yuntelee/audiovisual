@@ -5,10 +5,12 @@ let perspective = screen.availWidth / 600;
 let factor = canvasWidth / 50;
 let c1, c2, c3, c4, c5, c6, c7;
 
+
 let gtr, inst, beef; // Audio elements
 let gtrSrc, instSrc, beefSrc; // Media element sources
 let gtrContext, instContext, beefContext; // Audio contexts
 let audioLoaded = false; // Track whether audio has been loaded
+let audioPlaying = false;
 
 function setup() {
   createCanvas(canvasWidth, canvasHeight);
@@ -28,37 +30,37 @@ function draw() {
   strokeWeight(0);
 
   // Draw quads
-  fill(255, 249, 201);
-  quad(0, 0, canvasWidth, 0, canvasWidth, canvasHeight, 0, canvasHeight);
-
-  fill(255, 212, 151);
-  quad(
-    0 - (Math.abs(mouseX * 2 / factor)), canvasHeight * 0.13,
-    canvasWidth + (Math.abs(mouseX * 2 / factor)), canvasHeight * 0.2,
-    canvasWidth, canvasHeight,
-    0, canvasHeight
-  );
-
-  fill(251, 165, 139);
-  quad(
-    0 - (Math.abs(mouseX * 3 / factor)), canvasHeight * 0.37,
-    canvasWidth + (Math.abs(mouseX * 3 / factor)), canvasHeight * 0.33,
-    canvasWidth, canvasHeight,
-    0, canvasHeight
-  );
-
-  fill(251, 145, 143);
-  quad(
-    0 - (Math.abs(mouseX * 4 / factor)), canvasHeight * 0.57,
-    canvasWidth + (Math.abs(mouseX * 4 / factor)), canvasHeight * 0.53,
-    canvasWidth, canvasHeight,
-    0, canvasHeight
-  );
+ drawRectangles();
 
   drawTriangles();
 
+  if (!audioPlaying) {
+    drawPlayButton();
+  }
+
+  
+  // Play audio if the button is pressed
+if (clickPlayButton()) {
+  loadAudio();
+    gtr.play();
+    inst.play();
+    beef.play();
+    audioPlaying = true;
+  }
+}
+function drawPlayButton() {
   rectMode(CENTER);
-  fill(100, 150, 255);
+  
+  // Change color if hovering over the button
+  if (mouseX < width / 2 + width / 12 &&
+      mouseX > width / 2 - width / 12 &&
+      mouseY < height / 2 + height / 12 &&
+      mouseY > height / 2 - height / 12) {
+    fill(39, 3, 3); // Hover color
+  } else {
+    fill(100, 150, 255); // Default color
+  }
+  
   stroke(0);
   rect(canvasWidth / 2, canvasHeight / 2, canvasWidth / 6, canvasHeight / 6, 20);
 
@@ -66,46 +68,20 @@ function draw() {
   textAlign(CENTER, CENTER);
   textSize(100);
   text('play', canvasWidth / 2, canvasHeight / 2);
-
-  // Play audio if the button is pressed
-  if (audioLoaded && ball()) {
-    gtr.play();
-    inst.play();
-    beef.play();
-  }
 }
 
-function ball() {
+function clickPlayButton() {
+  // Check if play button was clicked
   if (mouseX < width / 2 + width / 12 &&
       mouseX > width / 2 - width / 12 &&
       mouseY < height / 2 + height / 12 &&
-      mouseY > height / 2 - height / 12
-  ) {
-    rectMode(CENTER);
-    fill(39, 3, 3);
-    stroke(0);
-    rect(canvasWidth / 2, canvasHeight / 2, canvasWidth / 6, canvasHeight / 6, 20);
-    
-    fill(0, 0, 0);
-    textAlign(CENTER, CENTER);
-    textSize(100);
-    text('play', canvasWidth / 2, canvasHeight / 2);
-
-    return mouseIsPressed; // Return true if the mouse is pressed
+      mouseY > height / 2 - height / 12 &&
+      mouseIsPressed) {
+    loadAudio(); // Load audio when the button is clicked
+    return true; // Return true if the mouse is pressed
   }
   
   return false; // Return false if conditions are not met
-}
-
-function mouseClicked() {
-  // Check if play button was clicked
-  if (mouseX > width / 2 - width / 12 &&
-      mouseX < width / 2 + width / 12 &&
-      mouseY > height / 2 - height / 12 &&
-      mouseY < height / 2 + height / 12
-  ) {
-    loadAudio(); // Load audio when the button is clicked
-  }
 }
 
 function loadAudio() {
@@ -133,6 +109,45 @@ function loadAudio() {
     audioLoaded = true;
     console.log("Audio loaded.");
   }
+}
+function mouseClicked() {
+  // Check if play button was clicked
+  if (mouseX > width / 2 - width / 12 &&
+      mouseX < width / 2 + width / 12 &&
+      mouseY > height / 2 - height / 12 &&
+      mouseY < height / 2 + height / 12
+  ) {
+    loadAudio(); // Load audio when the button is clicked
+  }
+}
+
+function drawRectangles() {
+  fill(255, 249, 201);
+  quad(0, 0, canvasWidth, 0, canvasWidth, canvasHeight, 0, canvasHeight);
+
+  fill(255, 212, 151);
+  quad(
+    0 - (Math.abs(mouseX * 2 / factor)), canvasHeight * 0.13,
+    canvasWidth + (Math.abs(mouseX * 2 / factor)), canvasHeight * 0.2,
+    canvasWidth, canvasHeight,
+    0, canvasHeight
+  );
+
+  fill(251, 165, 139);
+  quad(
+    0 - (Math.abs(mouseX * 3 / factor)), canvasHeight * 0.37,
+    canvasWidth + (Math.abs(mouseX * 3 / factor)), canvasHeight * 0.33,
+    canvasWidth, canvasHeight,
+    0, canvasHeight
+  );
+
+  fill(251, 145, 143);
+  quad(
+    0 - (Math.abs(mouseX * 4 / factor)), canvasHeight * 0.57,
+    canvasWidth + (Math.abs(mouseX * 4 / factor)), canvasHeight * 0.53,
+    canvasWidth, canvasHeight,
+    0, canvasHeight
+  );
 }
 
 function drawTriangles() {
@@ -221,7 +236,6 @@ class DraggableCircle {
     return this.x - (mouseX * this.moveFactor / factor);
   }
 
- 
   display() {
     stroke(0);
     if (this.dragging || this.hovered) {
@@ -229,7 +243,6 @@ class DraggableCircle {
       ellipse(this.getX(), this.y, this.r * 2);
     } 
   }
-
 
   hover(px, py) {
     let d = dist(px, py, this.getX(), this.y);
