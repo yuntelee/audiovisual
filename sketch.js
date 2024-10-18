@@ -15,6 +15,8 @@ let audioPlaying = false;
 // Declare gainNode globally
 let gainNodeMaster;
 let filterNodeGtr
+let limiterNodeMaster;
+let gainNodeBeef;
 
 function setup() {
   createCanvas(canvasWidth, canvasHeight);
@@ -45,14 +47,15 @@ function draw() {
   if (clickPlayButton()) {
     loadAudio();
     gtr.play();
-    // inst.play();
-    // beef.play();
+    inst.play();
+    beef.play();
     audioPlaying = true;
   }
 
   // Update gain node dynamically based on c5's Y position
   if (audioLoaded) {
     updateGainBasedOnY(c5, gainNodeMaster, 2, 0);
+    updateGainBasedOnY(c1, gainNodeBeef, 5, 0);
     updateFilterBasedOnY(c6, filterNodeGtr, 20000,0)
 
   }
@@ -111,6 +114,12 @@ function loadAudio() {
     instSrc = audiocontext.createMediaElementSource(inst);
     beefSrc = audiocontext.createMediaElementSource(beef);
 
+    gainNodeBeef = new GainNode(audiocontext,{
+      gain: 1, // Default gain value
+    });
+
+    beefSrc.connect(gainNodeBeef);
+
     // Initialize global gainNode
     gainNodeMaster = new GainNode(audiocontext, {
       gain: 1, // Default gain value
@@ -124,12 +133,24 @@ function loadAudio() {
 
     // Connect the source to the gainNode and the gainNode to the destination
     gtrSrc.connect(filterNodeGtr);
+    instSrc.connect(filterNodeGtr);
+    gainNodeBeef.connect(filterNodeGtr);
+
+    
+   
     
     filterNodeGtr.connect(gainNodeMaster);
-    instSrc.connect(gainNodeMaster);
-    beefSrc.connect(gainNodeMaster);
 
-    gainNodeMaster.connect(audiocontext.destination);
+    limiterNodeMaster= new DynamicsCompressorNode(audiocontext, {attack: 0.003,
+      threshold: -4
+    })
+    
+    gainNodeMaster.connect(limiterNodeMaster);
+    
+    // src - filter - gain - limiter destination
+
+
+    limiterNodeMaster.connect(audiocontext.destination);
 
 
     // Set audio loaded to true
@@ -151,8 +172,6 @@ function updateFilterBasedOnY(circle, filterNode, max, min) {
   } else {
     normalizedY = 44.51*Math.pow(Math.E,-6.11*(Math.abs(normalizedY)-1))-44.51;
   }
-
-  
   
   if (normalizedY > -0.05 && normalizedY < 0.05 ) {
     filterNode.type = "peaking";
@@ -183,6 +202,8 @@ function updateGainBasedOnY(circle, gainNode, max, min) {
   // Optional: Log the current gain and y position
   console.log("Y Position:", circle.getY(), "Gain Value:", gainNode.gain.value);
 }
+
+
 
 function mouseClicked() {
   // Check if play button was clicked
