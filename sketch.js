@@ -1,3 +1,4 @@
+
 let canvasWidth = screen.availWidth;
 let canvasHeight = screen.availHeight;
 
@@ -12,19 +13,20 @@ let audioLoaded = false; // Track whether audio has been loaded
 let audioPlaying = false;
 
 // Declare gainNode globally
-let gainNode;
+let gainNodeMaster;
+let filterNodeGtr
 
 function setup() {
   createCanvas(canvasWidth, canvasHeight);
   
   // Initialize draggable circles
-  c7 = new DraggableCircle(canvasWidth * 0, canvasHeight * 0.55, 20, 4 * perspective);
-  c1 = new DraggableCircle(canvasWidth * 0.57, canvasHeight * 0.67, 20, 6 * perspective);
-  c2 = new DraggableCircle(canvasWidth * 0.75, canvasHeight * 0.53, 20, 4 * perspective);
-  c6 = new DraggableCircle(canvasWidth * 1.35, canvasHeight * 0.5, 20, 6 * perspective);
-  c3 = new DraggableCircle(canvasWidth, canvasHeight * 0.47, 20, 3 * perspective);
-  c4 = new DraggableCircle(canvasWidth * 0.33, canvasHeight * 0.53, 20, 3 * perspective);
-  c5 = new DraggableCircle(canvasWidth * 0.25, canvasHeight * 0.73, 20, 1 * perspective);
+  c7 = new DraggableCircle(canvasWidth * 0, canvasHeight * 0.55, 20, 4 * perspective, 0);
+  c1 = new DraggableCircle(canvasWidth * 0.57, canvasHeight * 0.67, 20, 6 * perspective, 0);
+  c2 = new DraggableCircle(canvasWidth * 0.75, canvasHeight * 0.53, 20, 4 * perspective, 0);
+  c6 = new DraggableCircle(canvasWidth * 1.35, canvasHeight * 0.5, 20, 6 * perspective, 0);
+  c3 = new DraggableCircle(canvasWidth, canvasHeight * 0.47, 20, 3 * perspective, 0);
+  c4 = new DraggableCircle(canvasWidth * 0.33, canvasHeight * 0.53, 20, 3 * perspective, 0);
+  c5 = new DraggableCircle(canvasWidth * 0.25, canvasHeight * 0.73, 20, 1 * perspective, canvasHeight/2);
 }
 
 function draw() {
@@ -43,12 +45,16 @@ function draw() {
   if (clickPlayButton()) {
     loadAudio();
     gtr.play();
+    // inst.play();
+    // beef.play();
     audioPlaying = true;
   }
 
   // Update gain node dynamically based on c5's Y position
   if (audioLoaded) {
-    updateGainBasedOnY(c5, gainNode, 2, 0);
+    updateGainBasedOnY(c5, gainNodeMaster, 2, 0);
+    updateFilterBasedOnY(c6, filterNodeGtr, 20000,0)
+
   }
 }
 
@@ -102,15 +108,29 @@ function loadAudio() {
 
     // Create media element sources
     gtrSrc = audiocontext.createMediaElementSource(gtr);
+    instSrc = audiocontext.createMediaElementSource(inst);
+    beefSrc = audiocontext.createMediaElementSource(beef);
 
     // Initialize global gainNode
-    gainNode = new GainNode(audiocontext, {
+    gainNodeMaster = new GainNode(audiocontext, {
       gain: 1, // Default gain value
     });
 
+    filterNodeGtr = new BiquadFilterNode( audiocontext, {type: "lowpass",
+       Q :1,
+       detune : 0,
+      frequency : 350
+      }   )
+
     // Connect the source to the gainNode and the gainNode to the destination
-    gtrSrc.connect(gainNode);
-    gainNode.connect(audiocontext.destination);
+    gtrSrc.connect(filterNodeGtr);
+    
+    filterNodeGtr.connect(gainNodeMaster);
+    instSrc.connect(gainNodeMaster);
+    beefSrc.connect(gainNodeMaster);
+
+    gainNodeMaster.connect(audiocontext.destination);
+
 
     // Set audio loaded to true
     audioLoaded = true;
@@ -118,11 +138,41 @@ function loadAudio() {
   }
 }
 
+function updateFilterBasedOnY(circle, filterNode, max, min) {
+  // Normalize the y value to a range between 0 and 1
+  const maxY = canvasHeight; // Assuming your canvas height is the max value for y
+  const minY = circle.getMinY();            // Assuming the minimum y is 0
+  
+  // Map the y position of the circle to a gain value between 0 and 1
+  normalizedY = map(circle.getY(), minY, maxY, -1, 1);
+
+  if (normalizedY <= 0) {
+    normalizedY = 0-44.51*Math.pow(Math.E,6.11*Math.abs(normalizedY))-44.51;
+  } else {
+    normalizedY = 44.51*Math.pow(Math.E,-6.11*(Math.abs(normalizedY)-1))-44.51;
+  }
+
+  
+  
+  if (normalizedY > -0.05 && normalizedY < 0.05 ) {
+    filterNode.type = "peaking";
+  } else if (normalizedY <= -0.05) {
+    filterNode.type = "highpass";
+    filterNode.frequency.value = Math.abs(normalizedY);
+  } else if (normalizedY >= 0.05) {
+    filterNode.type = "lowpass";
+    filterNode.frequency.value = normalizedY;
+    console.log(filterNode.frequency);
+  }
+  
+  // Optional: Log the current gain and y position
+  console.log("Y Position:", circle.getY(), "NormalisedY:",  normalizedY,"Filter Frequency:", filterNode.frequency.value, "Filter Ty[e]:", filterNode.type);
+}
 
 function updateGainBasedOnY(circle, gainNode, max, min) {
   // Normalize the y value to a range between 0 and 1
   const maxY = canvasHeight; // Assuming your canvas height is the max value for y
-  const minY = 0;            // Assuming the minimum y is 0
+  const minY = circle.getMinY();            // Assuming the minimum y is 0
   
   // Map the y position of the circle to a gain value between 0 and 1
   const normalizedY = map(circle.getY(), minY, maxY, max, min);
@@ -241,7 +291,7 @@ function drawTriangles() {
 }
 
 class DraggableCircle {
-  constructor(x, y, r, moveFactor) {
+  constructor(x, y, r, moveFactor,minY) {
     this.initialX = x;
     this.x = x;
     this.y = y;
@@ -251,6 +301,11 @@ class DraggableCircle {
     this.hovered = false;
     this.moveFactor = moveFactor;
     this.finalY = y;
+    this.minY = minY;
+  }
+
+  getMinY() {
+    return this.minY;
   }
 
 getFinalY() {
@@ -290,7 +345,7 @@ getFinalY() {
     this.hovered = d < this.r;
 
     if (this.dragging) {
-      this.y = constrain(lerp(this.y, py, 0.1), this.r * 4, canvasHeight - this.r * 2);
+      this.y = constrain(lerp(this.y, py, 0.1), this.minY, canvasHeight - this.r * 2);
     }
   }
 
