@@ -221,6 +221,7 @@ class DraggableCircle {
     return this.x - (mouseX * this.moveFactor / factor);
   }
 
+ 
   display() {
     stroke(0);
     if (this.dragging || this.hovered) {
@@ -228,6 +229,7 @@ class DraggableCircle {
       ellipse(this.getX(), this.y, this.r * 2);
     } 
   }
+
 
   hover(px, py) {
     let d = dist(px, py, this.getX(), this.y);
