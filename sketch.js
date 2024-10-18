@@ -5,12 +5,14 @@ let perspective = screen.availWidth / 600;
 let factor = canvasWidth / 50;
 let c1, c2, c3, c4, c5, c6, c7;
 
-
 let gtr, inst, beef; // Audio elements
 let gtrSrc, instSrc, beefSrc; // Media element sources
 let gtrContext, instContext, beefContext; // Audio contexts
 let audioLoaded = false; // Track whether audio has been loaded
 let audioPlaying = false;
+
+// Declare gainNode globally
+let gainNode;
 
 function setup() {
   createCanvas(canvasWidth, canvasHeight);
@@ -30,8 +32,7 @@ function draw() {
   strokeWeight(0);
 
   // Draw quads
- drawRectangles();
-
+  drawRectangles();
   drawTriangles();
 
   if (!audioPlaying) {
@@ -39,38 +40,20 @@ function draw() {
   }
 
   // Play audio if the button is pressed
-if (clickPlayButton()) {
-  loadAudio();
+  if (clickPlayButton()) {
+    loadAudio();
     gtr.play();
-    inst.play();
-    beef.play();
     audioPlaying = true;
+  }
+
+  // Update gain node dynamically based on c5's Y position
+  if (audioLoaded) {
+    updateGainBasedOnY(c5, gainNode, 2, 0);
   }
 }
 
-function masterGain() {
-  gtrGain = gtrContext.createGain();
-  instGain = gtrContext.createGain();
-  beefGain = gtrContext.createGain();
 
-    gtrGain.gain.value = 1.5; // Increase by 50%
-  instGain.gain.value = 2;   // Double the volume
-  beefGain.gain.value = 1.2;  // Increase by 20%
-  let gtrSrc = gtrContext.createMediaElementSource(gtr);
-  let instSrc = gtrContext.createMediaElementSource(inst);
-  let beefSrc = beefContext.createMediaElementSource(beef);
 
-  // Connect sources to gain nodes, then to destination
-  gtrSrc.connect(gtrGain);
-  gtrGain.connect(gtrContext.destination);
-
-  instSrc.connect(instGain);
-  instGain.connect(instContext.destination);
-
-  beefSrc.connect(beefGain);
-  beefGain.connect(beefContext.destination);
-
-}
 
 function drawPlayButton() {
   rectMode(CENTER);
@@ -111,29 +94,46 @@ function clickPlayButton() {
 function loadAudio() {
   // Only load audio once
   if (!audioLoaded) {
-    gtrContext = new AudioContext();
-    instContext = new AudioContext();
-    beefContext = new AudioContext();
+    audiocontext = new AudioContext();
 
     gtr = new Audio("gtr.mp3");
     inst = new Audio("inst.mp3");
     beef = new Audio("beef.mp3");
 
     // Create media element sources
-    gtrSrc = gtrContext.createMediaElementSource(gtr);
-    instSrc = instContext.createMediaElementSource(inst);
-    beefSrc = beefContext.createMediaElementSource(beef);
+    gtrSrc = audiocontext.createMediaElementSource(gtr);
 
-    // Connect sources to destination
-    gtrSrc.connect(gtrContext.destination);
-    instSrc.connect(instContext.destination);
-    beefSrc.connect(beefContext.destination);
+    // Initialize global gainNode
+    gainNode = new GainNode(audiocontext, {
+      gain: 1, // Default gain value
+    });
+
+    // Connect the source to the gainNode and the gainNode to the destination
+    gtrSrc.connect(gainNode);
+    gainNode.connect(audiocontext.destination);
 
     // Set audio loaded to true
     audioLoaded = true;
     console.log("Audio loaded.");
   }
 }
+
+
+function updateGainBasedOnY(circle, gainNode, max, min) {
+  // Normalize the y value to a range between 0 and 1
+  const maxY = canvasHeight; // Assuming your canvas height is the max value for y
+  const minY = 0;            // Assuming the minimum y is 0
+  
+  // Map the y position of the circle to a gain value between 0 and 1
+  const normalizedY = map(circle.getY(), minY, maxY, max, min);
+  
+  // Set the gain value
+  gainNode.gain.value = normalizedY;
+  
+  // Optional: Log the current gain and y position
+  console.log("Y Position:", circle.getY(), "Gain Value:", gainNode.gain.value);
+}
+
 function mouseClicked() {
   // Check if play button was clicked
   if (mouseX > width / 2 - width / 12 &&
@@ -250,7 +250,12 @@ class DraggableCircle {
     this.offsetY = 0;
     this.hovered = false;
     this.moveFactor = moveFactor;
+    this.finalY = y;
   }
+
+getFinalY() {
+  return this.finalY;
+}
 
   getMoveFactor() {
     return this.moveFactor;
@@ -262,6 +267,14 @@ class DraggableCircle {
 
   getY() {
     return this.y;
+  }
+
+  getSliderY() {
+    return this.y/(canvasHeight - this.r * 2-this.r * 4);
+  }
+
+  getDragging() {
+    return this.dragging;
   }
 
   display() {
