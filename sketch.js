@@ -38,7 +38,6 @@ function draw() {
     drawPlayButton();
   }
 
-  
   // Play audio if the button is pressed
 if (clickPlayButton()) {
   loadAudio();
@@ -48,6 +47,31 @@ if (clickPlayButton()) {
     audioPlaying = true;
   }
 }
+
+function masterGain() {
+  gtrGain = gtrContext.createGain();
+  instGain = gtrContext.createGain();
+  beefGain = gtrContext.createGain();
+
+    gtrGain.gain.value = 1.5; // Increase by 50%
+  instGain.gain.value = 2;   // Double the volume
+  beefGain.gain.value = 1.2;  // Increase by 20%
+  let gtrSrc = gtrContext.createMediaElementSource(gtr);
+  let instSrc = gtrContext.createMediaElementSource(inst);
+  let beefSrc = beefContext.createMediaElementSource(beef);
+
+  // Connect sources to gain nodes, then to destination
+  gtrSrc.connect(gtrGain);
+  gtrGain.connect(gtrContext.destination);
+
+  instSrc.connect(instGain);
+  instGain.connect(instContext.destination);
+
+  beefSrc.connect(beefGain);
+  beefGain.connect(beefContext.destination);
+
+}
+
 function drawPlayButton() {
   rectMode(CENTER);
   
@@ -234,6 +258,10 @@ class DraggableCircle {
 
   getX() {
     return this.x - (mouseX * this.moveFactor / factor);
+  }
+
+  getY() {
+    return this.y;
   }
 
   display() {
