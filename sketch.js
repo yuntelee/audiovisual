@@ -27,14 +27,14 @@ let chorusWetNodeMaster;
 function setup() {
   createCanvas(canvasWidth, canvasHeight);
   
-  // Initialize draggable circles
-  c7 = new DraggableCircle(canvasWidth * 0, canvasHeight * 0.55, 20, 4 * perspective, 0);
-  c1 = new DraggableCircle(canvasWidth * 0.57, canvasHeight * 0.67, 20, 6 * perspective, 0);
-  c2 = new DraggableCircle(canvasWidth * 0.75, canvasHeight * 0.53, 20, 4 * perspective, 0);
-  c6 = new DraggableCircle(canvasWidth * 1.35, canvasHeight * 0.5, 20, 6 * perspective, 0);
-  c3 = new DraggableCircle(canvasWidth, canvasHeight * 0.47, 20, 3 * perspective, 0);
-  c4 = new DraggableCircle(canvasWidth * 0.33, canvasHeight * 0.53, 20, 3 * perspective, 0);
-  c5 = new DraggableCircle(canvasWidth * 0.25, canvasHeight * 0.73, 20, 1 * perspective, canvasHeight/2);
+  // Initialize draggable circles with labels
+  c7 = new DraggableCircle(canvasWidth * 0.05, canvasHeight * 0.55, 20, 4 * perspective, 0, "Reverb Mix");
+  c1 = new DraggableCircle(canvasWidth * 0.57, canvasHeight * 0.67, 20, 6 * perspective, 0, "Drums and Bass Volume");
+  c2 = new DraggableCircle(canvasWidth * 0.75, canvasHeight * 0.53, 20, 4 * perspective, 0, "Delay Time");
+  c6 = new DraggableCircle(canvasWidth * 1.35, canvasHeight * 0.5, 20, 6 * perspective, 0, "Filter Cutoff");
+  c3 = new DraggableCircle(canvasWidth, canvasHeight * 0.47, 20, 3 * perspective, 0, "Chorus Mix");
+  c4 = new DraggableCircle(canvasWidth * 0.33, canvasHeight * 0.53, 20, 3 * perspective, 0, "Delay Feedback");
+  c5 = new DraggableCircle(canvasWidth * 0.25, canvasHeight * 0.73, 20, 1 * perspective, canvasHeight/2, "Master Volume");
 }
 
 function draw() {
@@ -358,10 +358,12 @@ function drawTriangles() {
   c5.hover(mouseX, mouseY);
   c6.display();
   c6.hover(mouseX, mouseY);
+  c7.display();
+  c7.hover(mouseX, mouseY);
 }
 
 class DraggableCircle {
-  constructor(x, y, r, moveFactor, minY) {
+  constructor(x, y, r, moveFactor, minY, label) {
     this.initialX = x;
     this.x = x;
     this.y = y;
@@ -376,6 +378,7 @@ class DraggableCircle {
     this.opacity = 0;
     this.targetOpacity = 0;
     this.fadeSpeed = 0.1; // Controls fade speed (0.05 = ~1 second)
+    this.label = label;  // Add label property
   }
 
   getMinY() {
@@ -415,6 +418,13 @@ getFinalY() {
       this.targetOpacity = 1;
       fill(255, 249, 201, this.opacity * 128);
       ellipse(this.getX(), this.y, this.r * 2);
+      
+      // Draw text label
+      noStroke();
+      fill(0, this.opacity * 255);
+      textAlign(CENTER, BOTTOM);
+      textSize(16);
+      text(this.label, this.getX(), this.y - this.r - 5);
     } else {
       this.targetOpacity = 0;
     }
@@ -450,6 +460,7 @@ function mousePressed() {
   c4.pressed(mouseX, mouseY);
   c5.pressed(mouseX, mouseY);
   c6.pressed(mouseX, mouseY);
+  c7.pressed(mouseX, mouseY);
 }
 
 function mouseReleased() {
@@ -458,5 +469,6 @@ function mouseReleased() {
   c3.released();
   c4.released();
   c5.released();
-  c6.released();
+  c6.released(); 
+  c7.released();
 }
