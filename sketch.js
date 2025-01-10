@@ -74,7 +74,7 @@ function draw() {
   // Update audio parameters
   if (audioLoaded) {
     updateGainBasedOnY(c5, gainNodeMaster, 0.5, 0);
-    updateGainBasedOnY(c2, gainNodeGtr, 5, 0);
+    updateGainBasedOnY(c2, gainNodeGtr, 10, 0);
     updateGainBasedOnY(c1, gainNodeBeef, 5, 0);
     updateGainBasedOnY(c4, gainNodeInst, 5, 0);
     updateFilterBasedOnY(c6, filterNodeMaster, 20000, 0);
