@@ -14,26 +14,29 @@ let audioPlaying = false;
 
 // Declare gainNode globally
 let gainNodeMaster;
-let filterNodeGtr
+let filterNodeBeef;
 let limiterNodeMaster;
 let gainNodeBeef;
+let gainNodeGtr;
+let gainNodeInst;
 let convolverNodeMaster;
 
 let chrousNodeMaster;
 let chorusDryNodeMaster;
 let chorusWetNodeMaster;
 
+let fadeInNode;
 
 function setup() {
   createCanvas(canvasWidth, canvasHeight);
   
-  // Initialize draggable circles with labels
-  c7 = new DraggableCircle(canvasWidth * 0.05, canvasHeight * 0.55, 20, 4 * perspective, 0, "Reverb Mix");
-  c1 = new DraggableCircle(canvasWidth * 0.57, canvasHeight * 0.67, 20, 6 * perspective, 0, "Drums and Bass Volume");
-  c2 = new DraggableCircle(canvasWidth * 0.75, canvasHeight * 0.53, 20, 4 * perspective, 0, "Delay Time");
-  c6 = new DraggableCircle(canvasWidth * 1.35, canvasHeight * 0.5, 20, 6 * perspective, 0, "Filter Cutoff");
-  c3 = new DraggableCircle(canvasWidth, canvasHeight * 0.47, 20, 3 * perspective, 0, "Chorus Mix");
-  c4 = new DraggableCircle(canvasWidth * 0.33, canvasHeight * 0.53, 20, 3 * perspective, 0, "Delay Feedback");
+  // Initialize draggable circles with accurate labels
+  c7 = new DraggableCircle(canvasWidth * 0.05, canvasHeight * 0.7, 20, 4 * perspective, 0, "Reverb Mix");
+  c1 = new DraggableCircle(canvasWidth * 0.57, canvasHeight * 0.67, 20, 6 * perspective, 0, "Drum and Bass Volume");
+  c2 = new DraggableCircle(canvasWidth * 0.75, canvasHeight * 0.53, 20, 4 * perspective, 0, "Guitar Volume");
+  c6 = new DraggableCircle(canvasWidth * 1.35, canvasHeight * 0.5, 20, 6 * perspective, 0, "Master Filter");
+  c3 = new DraggableCircle(canvasWidth, canvasHeight * 0.47, 20, 3 * perspective, 0, "Drum and Bass Filter");
+  c4 = new DraggableCircle(canvasWidth * 0.33, canvasHeight * 0.53, 20, 3 * perspective, 0, "Instrument Volume");
   c5 = new DraggableCircle(canvasWidth * 0.25, canvasHeight * 0.73, 20, 1 * perspective, canvasHeight/2, "Master Volume");
 }
 
@@ -66,11 +69,15 @@ function draw() {
 
   // Update audio parameters
   if (audioLoaded) {
-    updateGainBasedOnY(c5, gainNodeMaster, 2, 0);
+    updateGainBasedOnY(c5, gainNodeMaster, 0.5, 0);
+    updateGainBasedOnY(c2, gainNodeGtr, 5, 0);
     updateGainBasedOnY(c1, gainNodeBeef, 5, 0);
-    updateFilterBasedOnY(c6, filterNodeGtr, 20000, 0);
-    if (chrousNodeMaster) {
-      updateChorusBasedonY(c3, chrousNodeMaster, 1, 0);
+    updateGainBasedOnY(c4, gainNodeInst, 5, 0);
+    updateFilterBasedOnY(c6, filterNodeMaster, 20000, 0);
+    updateFilterBasedOnY(c3, filterNodeBeef, 20000, 0);
+    
+    if (convolverNodeMaster) {
+      updateConvolverBasedOnY(c7, 1, 0);
     }
   }
 }
@@ -131,23 +138,37 @@ function loadAudio() {
       gainNodeBeef = audiocontext.createGain();
       gainNodeBeef.gain.value = 1;
 
+      gainNodeGtr = audiocontext.createGain();
+      gainNodeGtr.gain.value = 1;
+
+      gainNodeInst = audiocontext.createGain();
+      gainNodeInst.gain.value = 1;
+
       beefSrc.connect(gainNodeBeef);
+      gtrSrc.connect(gainNodeGtr);
+      instSrc.connect(gainNodeInst);
 
       gainNodeMaster = audiocontext.createGain();
       gainNodeMaster.gain.value = 1;
 
-      filterNodeGtr = audiocontext.createBiquadFilter();
-      filterNodeGtr.type = "lowpass";
-      filterNodeGtr.Q.value = 1;
-      filterNodeGtr.detune.value = 0;
-      filterNodeGtr.frequency.value = 350;
+      filterNodeMaster = audiocontext.createBiquadFilter();
+      filterNodeMaster.type = "lowpass";
+      filterNodeMaster.Q.value = 1;
+      filterNodeMaster.detune.value = 0;
+      filterNodeMaster.frequency.value = 350;
+
+      filterNodeBeef = audiocontext.createBiquadFilter();
+      gainNodeBeef.connect(filterNodeBeef);
+      filterNodeBeef.connect(filterNodeMaster);
 
       // Basic routing
-      gtrSrc.connect(filterNodeGtr);
-      instSrc.connect(filterNodeGtr);
-      gainNodeBeef.connect(filterNodeGtr);
-      filterNodeGtr.connect(gainNodeMaster);
-
+      // gtrSrc.connect(filterNodeMaster);
+      // instSrc.connect(filterNodeMaster);
+      gainNodeInst.connect(filterNodeMaster);
+      gainNodeGtr.connect(filterNodeMaster);
+      
+      filterNodeMaster.connect(gainNodeMaster);
+      gainNodeInst.connect(gainNodeMaster);
       limiterNodeMaster = audiocontext.createDynamicsCompressor();
       limiterNodeMaster.attack.value = 0.003;
       limiterNodeMaster.threshold.value = -4;
@@ -173,6 +194,43 @@ function loadAudio() {
         chorusDryNodeMaster.connect(limiterNodeMaster);
       } catch (error) {
         console.warn('Chorus initialization failed:', error);
+        gainNodeMaster.connect(limiterNodeMaster);
+      }
+
+
+      // Add inside loadAudio() function, after creating other nodes but before final connections
+      try {
+        // Create convolver node
+        convolverNodeMaster = audiocontext.createConvolver();
+        
+        // Create wet/dry controls for convolver
+        convolverDryNodeMaster = audiocontext.createGain();
+        convolverWetNodeMaster = audiocontext.createGain();
+        
+        // Set initial values
+        convolverDryNodeMaster.gain.value = 1;
+        convolverWetNodeMaster.gain.value = 0;
+
+        // Load impulse response
+        fetch('BOB.wav')
+          .then(response => response.arrayBuffer())
+          .then(buffer => audiocontext.decodeAudioData(buffer))
+          .then(decodedData => {
+            convolverNodeMaster.buffer = decodedData;
+            
+            // Connect convolver chain
+            gainNodeMaster.connect(convolverNodeMaster);
+            gainNodeMaster.connect(convolverDryNodeMaster);
+            convolverNodeMaster.connect(convolverWetNodeMaster);
+            convolverWetNodeMaster.connect(limiterNodeMaster);
+            convolverDryNodeMaster.connect(limiterNodeMaster);
+          })
+          .catch(error => {
+            console.warn('Convolver initialization failed:', error);
+            gainNodeMaster.connect(limiterNodeMaster);
+          });
+      } catch (error) {
+        console.warn('Convolver setup failed:', error);
         gainNodeMaster.connect(limiterNodeMaster);
       }
 
@@ -251,8 +309,18 @@ function updateGainBasedOnY(circle, gainNode, max, min) {
   console.log("Y Position:", circle.getY(), "Gain Value:", gainNode.gain.value);
 }
 
-
-
+function updateConvolverBasedOnY(circle, max, min) {
+  // Normalize the y value to a range between 0 and 1
+  const maxY = canvasHeight;
+  const minY = circle.getMinY();
+  
+  // Map the y position to wet/dry mix
+  const normalizedY = map(circle.getY(), minY, maxY, max, min);
+  
+  // Update wet/dry mix
+  convolverWetNodeMaster.gain.value = normalizedY;
+  convolverDryNodeMaster.gain.value = 1 - normalizedY;
+}
 
 function mouseClicked() {
   // Check if play button was clicked
