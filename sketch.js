@@ -1,4 +1,3 @@
-
 let canvasWidth = screen.availWidth;
 let canvasHeight = screen.availHeight;
 
@@ -9,6 +8,7 @@ let c1, c2, c3, c4, c5, c6, c7;
 let gtr, inst, beef; // Audio elements
 let gtrSrc, instSrc, beefSrc; // Media element sources
 let gtrContext, instContext, beefContext; // Audio contexts
+let tuna;
 let audioLoaded = false; // Track whether audio has been loaded
 let audioPlaying = false;
 
@@ -17,6 +17,12 @@ let gainNodeMaster;
 let filterNodeGtr
 let limiterNodeMaster;
 let gainNodeBeef;
+let convolverNodeMaster;
+
+let chrousNodeMaster;
+let chorusDryNodeMaster;
+let chorusWetNodeMaster;
+
 
 function setup() {
   createCanvas(canvasWidth, canvasHeight);
@@ -35,7 +41,6 @@ function draw() {
   background(100);
   strokeWeight(0);
 
-  // Draw quads
   drawRectangles();
   drawTriangles();
 
@@ -45,19 +50,28 @@ function draw() {
 
   // Play audio if the button is pressed
   if (clickPlayButton()) {
-    loadAudio();
-    gtr.play();
-    inst.play();
-    beef.play();
-    audioPlaying = true;
+    if (!audioLoaded) {
+      loadAudio();
+    }
+    if (audioLoaded) {
+      Promise.all([
+        gtr.play().catch(e => console.error('Error playing gtr:', e)),
+        inst.play().catch(e => console.error('Error playing inst:', e)),
+        beef.play().catch(e => console.error('Error playing beef:', e))
+      ]).then(() => {
+        audioPlaying = true;
+      });
+    }
   }
 
-  // Update gain node dynamically based on c5's Y position
+  // Update audio parameters
   if (audioLoaded) {
     updateGainBasedOnY(c5, gainNodeMaster, 2, 0);
     updateGainBasedOnY(c1, gainNodeBeef, 5, 0);
-    updateFilterBasedOnY(c6, filterNodeGtr, 20000,0)
-
+    updateFilterBasedOnY(c6, filterNodeGtr, 20000, 0);
+    if (chrousNodeMaster) {
+      updateChorusBasedonY(c3, chrousNodeMaster, 1, 0);
+    }
   }
 }
 
@@ -101,62 +115,96 @@ function clickPlayButton() {
 }
 
 function loadAudio() {
-  // Only load audio once
   if (!audioLoaded) {
-    audiocontext = new AudioContext();
+    try {
+      audiocontext = new AudioContext();
 
-    gtr = new Audio("gtr.mp3");
-    inst = new Audio("inst.mp3");
-    beef = new Audio("beef.mp3");
+      gtr = new Audio("gtr.mp3");
+      inst = new Audio("inst.mp3");
+      beef = new Audio("beef.mp3");
 
-    // Create media element sources
-    gtrSrc = audiocontext.createMediaElementSource(gtr);
-    instSrc = audiocontext.createMediaElementSource(inst);
-    beefSrc = audiocontext.createMediaElementSource(beef);
+      // Create media element sources
+      gtrSrc = audiocontext.createMediaElementSource(gtr);
+      instSrc = audiocontext.createMediaElementSource(inst);
+      beefSrc = audiocontext.createMediaElementSource(beef);
 
-    gainNodeBeef = new GainNode(audiocontext,{
-      gain: 1, // Default gain value
-    });
+      gainNodeBeef = audiocontext.createGain();
+      gainNodeBeef.gain.value = 1;
 
-    beefSrc.connect(gainNodeBeef);
+      beefSrc.connect(gainNodeBeef);
 
-    // Initialize global gainNode
-    gainNodeMaster = new GainNode(audiocontext, {
-      gain: 1, // Default gain value
-    });
+      gainNodeMaster = audiocontext.createGain();
+      gainNodeMaster.gain.value = 1;
 
-    filterNodeGtr = new BiquadFilterNode( audiocontext, {type: "lowpass",
-       Q :1,
-       detune : 0,
-      frequency : 350
-      }   )
+      filterNodeGtr = audiocontext.createBiquadFilter();
+      filterNodeGtr.type = "lowpass";
+      filterNodeGtr.Q.value = 1;
+      filterNodeGtr.detune.value = 0;
+      filterNodeGtr.frequency.value = 350;
 
-    // Connect the source to the gainNode and the gainNode to the destination
-    gtrSrc.connect(filterNodeGtr);
-    instSrc.connect(filterNodeGtr);
-    gainNodeBeef.connect(filterNodeGtr);
+      // Basic routing
+      gtrSrc.connect(filterNodeGtr);
+      instSrc.connect(filterNodeGtr);
+      gainNodeBeef.connect(filterNodeGtr);
+      filterNodeGtr.connect(gainNodeMaster);
 
-    
-   
-    
-    filterNodeGtr.connect(gainNodeMaster);
+      limiterNodeMaster = audiocontext.createDynamicsCompressor();
+      limiterNodeMaster.attack.value = 0.003;
+      limiterNodeMaster.threshold.value = -4;
 
-    limiterNodeMaster= new DynamicsCompressorNode(audiocontext, {attack: 0.003,
-      threshold: -4
-    })
-    
-    gainNodeMaster.connect(limiterNodeMaster);
-    
-    // src - filter - gain - limiter destination
+      try {
+        chrousNodeMaster = new Macro_ChorusNode(audiocontext, {
+          rate: 7,
+          depth: 0.5,
+          effect: true
+        });
 
+        chorusDryNodeMaster = audiocontext.createGain();
+        chorusWetNodeMaster = audiocontext.createGain();
 
-    limiterNodeMaster.connect(audiocontext.destination);
+        chorusDryNodeMaster.gain.value = 1;
+        chorusWetNodeMaster.gain.value = 0;
 
+        // Connect chorus chain
+        gainNodeMaster.connect(chrousNodeMaster);
+        gainNodeMaster.connect(chorusDryNodeMaster);
+        chrousNodeMaster.connect(chorusWetNodeMaster);
+        chorusWetNodeMaster.connect(limiterNodeMaster);
+        chorusDryNodeMaster.connect(limiterNodeMaster);
+      } catch (error) {
+        console.warn('Chorus initialization failed:', error);
+        gainNodeMaster.connect(limiterNodeMaster);
+      }
 
-    // Set audio loaded to true
-    audioLoaded = true;
-    console.log("Audio loaded.");
+      limiterNodeMaster.connect(audiocontext.destination);
+      audioLoaded = true;
+      console.log("Audio loaded successfully");
+    } catch (error) {
+      console.error('Audio initialization failed:', error);
+    }
   }
+}
+
+function updateChorusBasedonY(circle, filterNode, max, min) {
+  // Normalize the y value to a range between 0 and 1
+  const maxY = canvasHeight; // Assuming your canvas height is the max value for y
+  const minY = circle.getMinY();            // Assuming the minimum y is 0
+  
+  // Map the y position of the circle to a gain value between 0 and 1
+  normalizedY = map(circle.getY(), minY, maxY, 0, 1);
+       // Assuming the minimum y is 0  
+  // Map the y position of the circle to a gain value between 0 and 1
+  const normalizedY = map(circle.getY(), minY, maxY, max, min);
+  
+  // Set the gain value
+  chrousWetNodeMaster.gain = 1-normalizedY;
+  chrousDryNodeMaster.gain = normalizedY;
+  
+  // Optional: Log the current gain and y position
+  console.log("Y Position:", circle.getY(), "Gain Value:", gainNode.gain.value);
+  
+  // Optional: Log the current gain and y position
+  console.log("Y Position:", circle.getY(), "NormalisedY:",  normalizedY,"Filter Frequency:", filterNode.frequency.value, "Filter Ty[e]:", filterNode.type);
 }
 
 function updateFilterBasedOnY(circle, filterNode, max, min) {
@@ -202,6 +250,7 @@ function updateGainBasedOnY(circle, gainNode, max, min) {
   // Optional: Log the current gain and y position
   console.log("Y Position:", circle.getY(), "Gain Value:", gainNode.gain.value);
 }
+
 
 
 
@@ -382,6 +431,7 @@ getFinalY() {
     this.dragging = false;
   }
 }
+
 
 function mousePressed() {
   c1.pressed(mouseX, mouseY);
