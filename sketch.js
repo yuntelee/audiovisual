@@ -29,6 +29,12 @@ let fadeInNode;
 
 let customFont;
 
+// Add these variables at the top with other global variables
+let buttonOpacity = 255; // For button fade
+let buttonColor = [100, 150, 255]; // Default color
+let targetColor = [100, 150, 255]; // Target color for transitions
+let colorLerpAmount = 0; // For smooth color transitions
+
 function setup() {
   createCanvas(canvasWidth, canvasHeight);
   
@@ -49,7 +55,8 @@ function draw() {
   drawRectangles();
   drawTriangles();
 
-  if (!audioPlaying) {
+  // Always draw button if it's still visible
+  if (!audioPlaying || buttonOpacity > 0.1) {
     drawPlayButton();
   }
 
@@ -60,6 +67,7 @@ function draw() {
     }
     if (audioLoaded && !audioPlaying) {
       startAudioWithFade();
+      audioPlaying = true;  // Set this immediately when clicked
     }
   }
 
@@ -82,25 +90,40 @@ function draw() {
 
 function drawPlayButton() {
   rectMode(CENTER);
+  textAlign(CENTER, CENTER);
   
-  // Change color if hovering over the button
+  // Update button opacity when audio is playing
+  if (audioPlaying) {
+    buttonOpacity = lerp(buttonOpacity, 0, 0.1);
+  }
+  
+  // Handle hover state and color transitions
   if (mouseX < width / 2 + width / 12 &&
       mouseX > width / 2 - width / 12 &&
       mouseY < height / 2 + height / 12 &&
       mouseY > height / 2 - height / 12) {
-    fill(39, 3, 3); // Hover color
+    targetColor = [199, 199, 199];
   } else {
-    fill(100, 150, 255); // Default color
+    targetColor = [240, 240, 240];
   }
   
-  stroke(0);
+  // Smooth color transition
+  buttonColor[0] = lerp(buttonColor[0], targetColor[0], 0.4);
+  buttonColor[1] = lerp(buttonColor[1], targetColor[1], 0.4);
+  buttonColor[2] = lerp(buttonColor[2], targetColor[2], 0.4);
+  
+  stroke(0, buttonOpacity);
+  fill(buttonColor[0], buttonColor[1], buttonColor[2], buttonOpacity);
   rect(canvasWidth / 2, canvasHeight / 2, canvasWidth / 6, canvasHeight / 6, 20);
 
-  fill(0, 0, 0);
-  textAlign(CENTER, CENTER);
-  textFont('Modena'); // Or try 'Arial', 'Verdana', 'Georgia', etc.
-  textSize(60);
-  text('PLAY', canvasWidth / 2, canvasHeight / 2);
+  fill(50, buttonOpacity);
+  textFont('Didact Gothic');
+  textStyle(NORMAL);
+  textSize(65);
+  text('Play', canvasWidth / 2, canvasHeight / 2);
+  textSize(25);
+  text('Drag the peak of the mountains to change the sound.\nHeadphones are recommended.', canvasWidth / 2, canvasHeight / 1/4);
+
 }
 
 function clickPlayButton() {
@@ -230,6 +253,8 @@ function loadAudio() {
         gainNodeMaster.connect(limiterNodeMaster);
       }
 
+
+
       limiterNodeMaster.connect(audiocontext.destination);
       audioLoaded = true;
       console.log("Audio loaded successfully");
@@ -330,79 +355,97 @@ function mouseClicked() {
 }
 
 function drawRectangles() {
-  fill(255, 249, 201);
+  // Soft purple
+  fill(142, 114, 181);
   quad(0, 0, canvasWidth, 0, canvasWidth, canvasHeight, 0, canvasHeight);
 
-  fill(255, 212, 151);
+  // Soft peach
+  fill(238, 139, 133);
   quad(
-    0 - (Math.abs(mouseX * 2 / factor)), canvasHeight * 0.13,
-    canvasWidth + (Math.abs(mouseX * 2 / factor)), canvasHeight * 0.2,
+    0 - (Math.abs(mouseX * 2 / factor)), canvasHeight * 0.05,
+    canvasWidth + (Math.abs(mouseX * 2 / factor)), canvasHeight * 0.08,
     canvasWidth, canvasHeight,
     0, canvasHeight
   );
 
-  fill(251, 165, 139);
+  // Soft orange
+  fill(246, 171, 125);
   quad(
-    0 - (Math.abs(mouseX * 3 / factor)), canvasHeight * 0.37,
-    canvasWidth + (Math.abs(mouseX * 3 / factor)), canvasHeight * 0.33,
+    0 - (Math.abs(mouseX * 3 / factor)), canvasHeight * 0.25,
+    canvasWidth + (Math.abs(mouseX * 3 / factor)), canvasHeight * 0.22,
     canvasWidth, canvasHeight,
     0, canvasHeight
   );
 
-  fill(251, 145, 143);
+  // Soft yellow-orange
+  fill(248, 208, 143);
   quad(
-    0 - (Math.abs(mouseX * 4 / factor)), canvasHeight * 0.57,
-    canvasWidth + (Math.abs(mouseX * 4 / factor)), canvasHeight * 0.53,
+    0 - (Math.abs(mouseX * 4 / factor)), canvasHeight * 0.40,
+    canvasWidth + (Math.abs(mouseX * 4 / factor)), canvasHeight * 0.42,
     canvasWidth, canvasHeight,
     0, canvasHeight
   );
+
+  // Soft yellow
+  fill(252, 242, 165);
+  quad(
+    0 - (Math.abs(mouseX * 4 / factor)), canvasHeight * 0.60,
+    canvasWidth + (Math.abs(mouseX * 4 / factor)), canvasHeight * 0.57,
+    canvasWidth, canvasHeight,
+    0, canvasHeight
+  );
+  
+  
 }
+
+
+
 
 function drawTriangles() {
   // Draw triangles
-  fill(73, 73, 75);
+  fill(65, 66, 66);
   triangle(
     canvasWidth * 0.22 - (mouseX * c1.getMoveFactor() / factor), canvasHeight,
     c1.getX(), c1.y,
     canvasWidth * 0.9 - (mouseX * c1.getMoveFactor() / factor), canvasHeight
   );
 
-  fill(73, 73, 75);
+  fill(72, 82, 82);
   triangle(
     canvasWidth * 0.8 - (mouseX * c6.getMoveFactor() / factor), canvasHeight,
     c6.getX(), c6.y,
     canvasWidth * 1.6 - (mouseX * c6.getMoveFactor() / factor), canvasHeight
   );
 
-  fill(114, 118, 123);
+  fill(89, 92, 92);
   triangle(
     canvasWidth * -0.4 - (mouseX * c7.getMoveFactor() / factor), canvasHeight,
     c7.getX(), c7.y,
     canvasWidth * 0.4 - (mouseX * c7.getMoveFactor() / factor), canvasHeight
   );
 
-  fill(114, 118, 123);
+  fill(116, 130, 130);
   triangle(
     canvasWidth * 0.5 - (mouseX * c2.getMoveFactor() / factor), canvasHeight,
     c2.getX(), c2.y,
     canvasWidth - (mouseX * c2.getMoveFactor() / factor), canvasHeight
   );
 
-  fill(130, 134, 138);
+  fill(134, 138, 138);
   triangle(
     canvasWidth * 0.58 - (mouseX * c3.getMoveFactor() / factor), canvasHeight,
     c3.getX(), c3.y,
     canvasWidth * 1.25 - (mouseX * c3.getMoveFactor() / factor), canvasHeight
   );
 
-  fill(130, 134, 138);
+  fill(148, 161, 161);
   triangle(
     canvasWidth * -0.17 - (mouseX * c4.getMoveFactor() / factor), canvasHeight,
     c4.getX(), c4.y,
     canvasWidth * 0.67 - (mouseX * c4.getMoveFactor() / factor), canvasHeight
   );
 
-  fill(166, 169, 172);
+  fill(161, 181, 181);
   triangle(
     canvasWidth * -0.08 - (mouseX * c5.getMoveFactor() / factor), canvasHeight,
     c5.getX(), c5.y,
@@ -485,7 +528,7 @@ getFinalY() {
       
       // Draw text label
       noStroke();
-      fill(0, this.opacity * 255);
+      fill(40, this.opacity * 255);
       textAlign(CENTER, BOTTOM);
       textSize(16);
       text(this.label, this.getX(), this.y - this.r - 5);
@@ -515,6 +558,7 @@ getFinalY() {
     this.dragging = false;
   }
 }
+
 
 
 function mousePressed() {
