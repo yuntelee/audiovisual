@@ -361,7 +361,7 @@ function drawTriangles() {
 }
 
 class DraggableCircle {
-  constructor(x, y, r, moveFactor,minY) {
+  constructor(x, y, r, moveFactor, minY) {
     this.initialX = x;
     this.x = x;
     this.y = y;
@@ -372,6 +372,10 @@ class DraggableCircle {
     this.moveFactor = moveFactor;
     this.finalY = y;
     this.minY = minY;
+    // Add opacity property for fading
+    this.opacity = 0;
+    this.targetOpacity = 0;
+    this.fadeSpeed = 0.1; // Controls fade speed (0.05 = ~1 second)
   }
 
   getMinY() {
@@ -403,11 +407,17 @@ getFinalY() {
   }
 
   display() {
-    stroke(0);
+    // Update opacity with smooth transition
+    this.opacity = lerp(this.opacity, this.targetOpacity, this.fadeSpeed);
+    
+    stroke(0, this.opacity * 255);
     if (this.dragging || this.hovered) {
-      fill(255, 249, 201, 128);
+      this.targetOpacity = 1;
+      fill(255, 249, 201, this.opacity * 128);
       ellipse(this.getX(), this.y, this.r * 2);
-    } 
+    } else {
+      this.targetOpacity = 0;
+    }
   }
 
   hover(px, py) {
