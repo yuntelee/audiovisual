@@ -27,6 +27,8 @@ let chorusWetNodeMaster;
 
 let fadeInNode;
 
+let customFont;
+
 function setup() {
   createCanvas(canvasWidth, canvasHeight);
   
@@ -56,14 +58,8 @@ function draw() {
     if (!audioLoaded) {
       loadAudio();
     }
-    if (audioLoaded) {
-      Promise.all([
-        gtr.play().catch(e => console.error('Error playing gtr:', e)),
-        inst.play().catch(e => console.error('Error playing inst:', e)),
-        beef.play().catch(e => console.error('Error playing beef:', e))
-      ]).then(() => {
-        audioPlaying = true;
-      });
+    if (audioLoaded && !audioPlaying) {
+      startAudioWithFade();
     }
   }
 
@@ -75,7 +71,6 @@ function draw() {
     updateGainBasedOnY(c4, gainNodeInst, 5, 0);
     updateFilterBasedOnY(c6, filterNodeMaster, 20000, 0);
     updateFilterBasedOnY(c3, filterNodeBeef, 20000, 0);
-    
     if (convolverNodeMaster) {
       updateConvolverBasedOnY(c7, 1, 0);
     }
@@ -103,8 +98,9 @@ function drawPlayButton() {
 
   fill(0, 0, 0);
   textAlign(CENTER, CENTER);
-  textSize(100);
-  text('play', canvasWidth / 2, canvasHeight / 2);
+  textFont('Modena'); // Or try 'Arial', 'Verdana', 'Georgia', etc.
+  textSize(60);
+  text('PLAY', canvasWidth / 2, canvasHeight / 2);
 }
 
 function clickPlayButton() {
@@ -539,4 +535,31 @@ function mouseReleased() {
   c5.released();
   c6.released(); 
   c7.released();
+}
+
+function startAudioWithFade() {
+  const fadeTime = 3.0; // 3 second fade
+  
+  // Create fade-in node if it doesn't exist
+  fadeInNode = audiocontext.createGain();
+  fadeInNode.gain.value = 0;
+  
+  // Connect fadeInNode in the chain before destination
+  limiterNodeMaster.disconnect();
+  limiterNodeMaster.connect(fadeInNode);
+  fadeInNode.connect(audiocontext.destination);
+  
+  // Schedule the fade
+  const currentTime = audiocontext.currentTime;
+  fadeInNode.gain.setValueAtTime(0, currentTime);
+  fadeInNode.gain.linearRampToValueAtTime(1, currentTime + fadeTime);
+  
+  // Start playing all tracks
+  Promise.all([
+    gtr.play().catch(e => console.error('Error playing gtr:', e)),
+    inst.play().catch(e => console.error('Error playing inst:', e)),
+    beef.play().catch(e => console.error('Error playing beef:', e))
+  ]).then(() => {
+    audioPlaying = true;
+  });
 }
