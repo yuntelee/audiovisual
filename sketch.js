@@ -116,9 +116,9 @@ function drawPlayButton() {
       mouseX > width / 2 - width / 12 &&
       mouseY < height / 2 + height / 12 &&
       mouseY > height / 2 - height / 12) {
-    targetColor = [199, 199, 199];
+    targetColor = [181, 175, 165];
   } else {
-    targetColor = [252, 254, 246];
+    targetColor = [250, 241, 227];
   }
   
   // Smooth color transition
@@ -386,8 +386,8 @@ function drawRectangles() {
   // Soft orange
   fill(246, 171, 125);
   quad(
-    0 - (Math.abs(mouseX * 3 / factor)), canvasHeight * 0.25,
-    canvasWidth + (Math.abs(mouseX * 3 / factor)), canvasHeight * 0.22,
+    0 - (Math.abs(mouseX * 3 / factor)), canvasHeight * 0.26,
+    canvasWidth + (Math.abs(mouseX * 3 / factor)), canvasHeight * 0.23,
     canvasWidth, canvasHeight,
     0, canvasHeight
   );
@@ -395,8 +395,8 @@ function drawRectangles() {
   // Soft yellow-orange
   fill(248, 208, 143);
   quad(
-    0 - (Math.abs(mouseX * 4 / factor)), canvasHeight * 0.40,
-    canvasWidth + (Math.abs(mouseX * 4 / factor)), canvasHeight * 0.42,
+    0 - (Math.abs(mouseX * 4 / factor)), canvasHeight * 0.42,
+    canvasWidth + (Math.abs(mouseX * 4 / factor)), canvasHeight * 0.44,
     canvasWidth, canvasHeight,
     0, canvasHeight
   );
@@ -404,8 +404,8 @@ function drawRectangles() {
   // Soft yellow
   fill(252, 242, 165);
   quad(
-    0 - (Math.abs(mouseX * 4 / factor)), canvasHeight * 0.60,
-    canvasWidth + (Math.abs(mouseX * 4 / factor)), canvasHeight * 0.57,
+    0 - (Math.abs(mouseX * 4 / factor)), canvasHeight * 0.63,
+    canvasWidth + (Math.abs(mouseX * 4 / factor)), canvasHeight * 0.6,
     canvasWidth, canvasHeight,
     0, canvasHeight
   );
@@ -428,6 +428,7 @@ function drawRectangles() {
   noStroke();
   fill(255, 197, 115, 20);
   circle(canvasWidth-mouseX, sun+=0.01, 200);
+
 
   //inner
   noStroke();
