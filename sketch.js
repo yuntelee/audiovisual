@@ -16,6 +16,7 @@ let audioPlaying = false;
 let gainNodeMaster;
 let filterNodeBeef;
 let limiterNodeMaster;
+let filterNodeMaster;
 let gainNodeBeef;
 let gainNodeGtr;
 let gainNodeInst;
@@ -29,6 +30,11 @@ let fadeInNode;
 
 let customFont;
 
+let red=0;
+let green=0;
+let blue=0;
+let sun=canvasHeight/3*2;
+
 // Add these variables at the top with other global variables
 let buttonOpacity = 255; // For button fade
 let buttonColor = [100, 150, 255]; // Default color
@@ -38,13 +44,16 @@ let colorLerpAmount = 0; // For smooth color transitions
 function setup() {
   createCanvas(canvasWidth, canvasHeight);
   
+  // Initialize button opacity to 0 for fade-in effect
+  buttonOpacity = 0;
+
   // Initialize draggable circles with accurate labels
-  c7 = new DraggableCircle(canvasWidth * 0.05, canvasHeight * 0.7, 20, 4 * perspective, 0, "Reverb Mix");
+  c7 = new DraggableCircle(canvasWidth * 0.05, canvasHeight * 0.7, 20, 4 * perspective, 0, "Reverb");
   c1 = new DraggableCircle(canvasWidth * 0.57, canvasHeight * 0.67, 20, 6 * perspective, 0, "Drum and Bass Volume");
   c2 = new DraggableCircle(canvasWidth * 0.75, canvasHeight * 0.53, 20, 4 * perspective, 0, "Guitar Volume");
   c6 = new DraggableCircle(canvasWidth * 1.35, canvasHeight * 0.5, 20, 6 * perspective, 0, "Master Filter");
   c3 = new DraggableCircle(canvasWidth, canvasHeight * 0.47, 20, 3 * perspective, 0, "Drum and Bass Filter");
-  c4 = new DraggableCircle(canvasWidth * 0.33, canvasHeight * 0.53, 20, 3 * perspective, 0, "Instrument Volume");
+  c4 = new DraggableCircle(canvasWidth * 0.33, canvasHeight * 0.53, 20, 3 * perspective, 0, "Ensemble Volume");
   c5 = new DraggableCircle(canvasWidth * 0.25, canvasHeight * 0.73, 20, 1 * perspective, canvasHeight/2, "Master Volume");
 }
 
@@ -95,6 +104,11 @@ function drawPlayButton() {
   // Update button opacity when audio is playing
   if (audioPlaying) {
     buttonOpacity = lerp(buttonOpacity, 0, 0.1);
+  } else {
+    // Fade in effect for button opacity
+    if (buttonOpacity < 255) {
+      buttonOpacity += 5; // Increase opacity gradually
+    }
   }
   
   // Handle hover state and color transitions
@@ -104,7 +118,7 @@ function drawPlayButton() {
       mouseY > height / 2 - height / 12) {
     targetColor = [199, 199, 199];
   } else {
-    targetColor = [240, 240, 240];
+    targetColor = [252, 254, 246];
   }
   
   // Smooth color transition
@@ -116,14 +130,16 @@ function drawPlayButton() {
   fill(buttonColor[0], buttonColor[1], buttonColor[2], buttonOpacity);
   rect(canvasWidth / 2, canvasHeight / 2, canvasWidth / 6, canvasHeight / 6, 20);
 
-  fill(50, buttonOpacity);
-  textFont('Didact Gothic');
-  textStyle(NORMAL);
-  textSize(65);
-  text('Play', canvasWidth / 2, canvasHeight / 2);
-  textSize(25);
-  text('Drag the peak of the mountains to change the sound.\nHeadphones are recommended.', canvasWidth / 2, canvasHeight / 1/4);
-
+  // Only draw text if buttonOpacity is above a certain threshold
+  if (buttonOpacity > 0) {
+    fill(50, buttonOpacity);
+    textFont('Didact Gothic');
+    textStyle(NORMAL);
+    textSize(65);
+    text('Play', canvasWidth / 2, canvasHeight / 2);
+    textSize(25);
+    text('Drag the peak of the mountains to change the sound.\nHeadphones are recommended.', canvasWidth / 2, canvasHeight / 4);
+  }
 }
 
 function clickPlayButton() {
@@ -145,9 +161,9 @@ function loadAudio() {
     try {
       audiocontext = new AudioContext();
 
-      gtr = new Audio("gtr.mp3");
-      inst = new Audio("inst.mp3");
-      beef = new Audio("beef.mp3");
+      gtr = new Audio("acouGtr.mp3");
+      inst = new Audio("instAtmo.mp3");
+      beef = new Audio("drumBass2.mp3");
 
       // Create media element sources
       gtrSrc = audiocontext.createMediaElementSource(gtr);
@@ -172,7 +188,7 @@ function loadAudio() {
 
       filterNodeMaster = audiocontext.createBiquadFilter();
       filterNodeMaster.type = "lowpass";
-      filterNodeMaster.Q.value = 1;
+      filterNodeMaster.Q.value = 10;
       filterNodeMaster.detune.value = 0;
       filterNodeMaster.frequency.value = 350;
 
@@ -187,7 +203,6 @@ function loadAudio() {
       gainNodeGtr.connect(filterNodeMaster);
       
       filterNodeMaster.connect(gainNodeMaster);
-      gainNodeInst.connect(gainNodeMaster);
       limiterNodeMaster = audiocontext.createDynamicsCompressor();
       limiterNodeMaster.attack.value = 0.003;
       limiterNodeMaster.threshold.value = -4;
@@ -231,7 +246,7 @@ function loadAudio() {
         convolverWetNodeMaster.gain.value = 0;
 
         // Load impulse response
-        fetch('BOB.wav')
+        fetch('impulse1.wav')
           .then(response => response.arrayBuffer())
           .then(buffer => audiocontext.decodeAudioData(buffer))
           .then(decodedData => {
@@ -394,8 +409,31 @@ function drawRectangles() {
     canvasWidth, canvasHeight,
     0, canvasHeight
   );
+
+  fill(255, 197, 115, 20);
+  circle(canvasWidth-mouseX, sun+=0.01, 500);
+
+  fill(255, 197, 115, 20);
+  circle(canvasWidth-mouseX, sun+=0.01, 440);
+
+  fill(255, 197, 115, 20);
+  circle(canvasWidth-mouseX, sun+=0.01, 380);
+
+  fill(255, 197, 115, 20);
+  circle(canvasWidth-mouseX, sun+=0.01, 320);
+
+  fill(255, 197, 115, 20);
+  circle(canvasWidth-mouseX, sun+=0.01, 260);
+
+  noStroke();
+  fill(255, 197, 115, 20);
+  circle(canvasWidth-mouseX, sun+=0.01, 200);
+
+  //inner
+  noStroke();
+  fill(252,254,246,100);
   
-  
+  circle(canvasWidth-mouseX, sun+=0.01, 150);
 }
 
 
@@ -583,26 +621,26 @@ function mouseReleased() {
 
 function startAudioWithFade() {
   const fadeTime = 3.0; // 3 second fade
-  
+
   // Create fade-in node if it doesn't exist
   fadeInNode = audiocontext.createGain();
   fadeInNode.gain.value = 0;
-  
+
   // Connect fadeInNode in the chain before destination
   limiterNodeMaster.disconnect();
   limiterNodeMaster.connect(fadeInNode);
   fadeInNode.connect(audiocontext.destination);
-  
+
   // Schedule the fade
   const currentTime = audiocontext.currentTime;
   fadeInNode.gain.setValueAtTime(0, currentTime);
   fadeInNode.gain.linearRampToValueAtTime(1, currentTime + fadeTime);
-  
-  // Start playing all tracks
+
+  // Start playing all tracks at the same time
   Promise.all([
-    gtr.play().catch(e => console.error('Error playing gtr:', e)),
-    inst.play().catch(e => console.error('Error playing inst:', e)),
-    beef.play().catch(e => console.error('Error playing beef:', e))
+    gtr.play().then(() => gtr.currentTime = 0).catch(e => console.error('Error playing gtr:', e)),
+    inst.play().then(() => inst.currentTime = 0).catch(e => console.error('Error playing inst:', e)),
+    beef.play().then(() => beef.currentTime = 0).catch(e => console.error('Error playing beef:', e))
   ]).then(() => {
     audioPlaying = true;
   });
