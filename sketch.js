@@ -163,9 +163,9 @@ function loadAudio() {
         try {
             audiocontext = new AudioContext();
 
-            gtr = new Audio("acouGtr.mp3");
-            inst = new Audio("instAtmo.mp3");
-            beef = new Audio("drumBass2.mp3");
+            gtr = new Audio("https://yuntelee.github.io/audiovisual/acouGtr.mp3");
+            inst = new Audio("https://yuntelee.github.io/audiovisual/instAtmo.mp3");
+            beef = new Audio("https://yuntelee.github.io/audiovisual/drumBass2.mp3");
 
             // Create media element sources
             gtrSrc = audiocontext.createMediaElementSource(gtr);
