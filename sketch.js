@@ -141,6 +141,8 @@ function drawPlayButton() {
         text('Play', canvasWidth / 2, canvasHeight / 2);
         textSize(25);
         text('Drag the peak of the mountains to change the sound.\nHeadphones are recommended.', canvasWidth / 2, canvasHeight / 4);
+        textSize(16);
+        text('\n\n\n\n\n\n\n\nIf sound is not playing, go to \'i\' on the top-left of your browser\n -> Site settings -> Permissions, and Allow Sound.', canvasWidth / 2, canvasHeight / 4);
     }
 }
 
@@ -158,14 +160,15 @@ function clickPlayButton() {
     return false; // Return false if conditions are not met
 }
 
+
 function loadAudio() {
     if (!audioLoaded) {
         try {
             audiocontext = new AudioContext();
 
-            gtr = new Audio("https://yuntelee.github.io/audiovisual/acouGtr.mp3");
-            inst = new Audio("https://yuntelee.github.io/audiovisual/instAtmo.mp3");
-            beef = new Audio("https://yuntelee.github.io/audiovisual/drumBass2.mp3");
+            gtr = new Audio("./acouGtr.mp3");
+            inst = new Audio("./instAtmo.mp3");
+            beef = new Audio("./drumBass2.mp3");
 
             // Create media element sources
             gtrSrc = audiocontext.createMediaElementSource(gtr);
